@@ -1,0 +1,624 @@
+---
+// src/pages/results.astro
+export const prerender = false;
+---
+
+<style>
+    .results-screen {
+        width: 100%;
+        min-height: 100vh;
+        padding: 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .trophy-animation {
+        font-size: 10rem;
+        margin-bottom: 2rem;
+        animation: trophyBounce 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 50px rgba(255, 215, 0, 0.8));
+    }
+
+    @keyframes trophyBounce {
+        0%, 100% { 
+            transform: translateY(0) rotate(-5deg);
+        }
+        50% { 
+            transform: translateY(-30px) rotate(5deg);
+        }
+    }
+
+    .winner-announcement {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 6rem;
+        letter-spacing: 3px;
+        background: linear-gradient(45deg, #fbbf24, #f59e0b, #fbbf24);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: goldShine 3s ease-in-out infinite;
+        margin-bottom: 3rem;
+        text-shadow: 0 0 80px rgba(251, 191, 36, 0.5);
+    }
+
+    @keyframes goldShine {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+
+    .winner-card {
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(251, 191, 36, 0.1));
+        backdrop-filter: blur(10px);
+        border: 3px solid #fbbf24;
+        border-radius: 2rem;
+        padding: 3rem;
+        max-width: 800px;
+        margin: 0 auto 3rem;
+        box-shadow: 0 0 100px rgba(255, 215, 0, 0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .winner-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+        animation: winnerShine 4s linear infinite;
+    }
+
+    @keyframes winnerShine {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .winner-team-name {
+        font-size: 4rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 30px currentColor;
+        position: relative;
+        z-index: 1;
+    }
+
+    .winner-score {
+        font-size: 5rem;
+        font-weight: bold;
+        color: #fbbf24;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+        animation: scorePulse 2s ease-in-out infinite;
+        position: relative;
+        z-index: 1;
+    }
+
+    @keyframes scorePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .winner-members {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .winner-member {
+        padding: 1rem 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        font-weight: bold;
+        font-size: 1.125rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+    }
+
+    .winner-member:hover {
+        transform: scale(1.05);
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .winner-member.mvp {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+        border: 2px solid #8b5cf6;
+        animation: mvpGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes mvpGlow {
+        0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+        50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+    }
+
+    .mvp-section {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+        backdrop-filter: blur(10px);
+        border: 3px solid #8b5cf6;
+        border-radius: 2rem;
+        padding: 3rem;
+        max-width: 600px;
+        margin: 0 auto 3rem;
+        box-shadow: 0 0 100px rgba(139, 92, 246, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .mvp-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+        animation: mvpShine 3s linear infinite;
+    }
+
+    @keyframes mvpShine {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .mvp-crown {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+        filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8));
+        animation: crownFloat 3s ease-in-out infinite;
+        position: relative;
+        z-index: 1;
+    }
+
+    @keyframes crownFloat {
+        0%, 100% { transform: translateY(0) rotate(-10deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+
+    .mvp-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #8b5cf6;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .mvp-name {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        animation: mvpNamePulse 2s ease-in-out infinite;
+        position: relative;
+        z-index: 1;
+    }
+
+    @keyframes mvpNamePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .mvp-stats {
+        font-size: 1.5rem;
+        color: #a78bfa;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .prize-info {
+        font-size: 1.75rem;
+        color: #fbbf24;
+        font-weight: bold;
+        text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .discord-id {
+        font-size: 1.125rem;
+        color: #93c5fd;
+        background: rgba(59, 130, 246, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        display: inline-block;
+        margin-top: 0.5rem;
+        font-family: monospace;
+        position: relative;
+        z-index: 1;
+    }
+
+    .all-standings {
+        margin-top: 4rem;
+        width: 100%;
+        max-width: 1200px;
+    }
+
+    .standings-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        color: #a78bfa;
+    }
+
+    .standings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .standing-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1rem;
+        padding: 2rem;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .standing-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--team-color);
+    }
+
+    .standing-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(255, 255, 255, 0.1);
+        border-color: var(--team-color);
+    }
+
+    .standing-position {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #a78bfa;
+        margin-bottom: 0.5rem;
+    }
+
+    .standing-position.first {
+        color: #fbbf24;
+        text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+    }
+
+    .standing-position.second {
+        color: #c0c0c0;
+        text-shadow: 0 0 20px rgba(192, 192, 192, 0.8);
+    }
+
+    .standing-position.third {
+        color: #cd7f32;
+        text-shadow: 0 0 20px rgba(205, 127, 50, 0.8);
+    }
+
+    .standing-team-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .standing-score {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+
+    .standing-members {
+        font-size: 0.875rem;
+        color: #6b7280;
+        line-height: 1.6;
+    }
+
+    .confetti {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1000;
+    }
+
+    .confetti-piece {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #fbbf24;
+        animation: confettiFall 3s linear infinite;
+    }
+
+    @keyframes confettiFall {
+        0% {
+            transform: translateY(-100vh) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+
+    .play-again-btn {
+        margin-top: 3rem;
+        padding: 1.5rem 3rem;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        border: none;
+        border-radius: 1rem;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.3s;
+    }
+
+    .play-again-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 20px 40px rgba(139, 92, 246, 0.5);
+    }
+
+    @media (max-width: 768px) {
+        .winner-announcement {
+            font-size: 3rem;
+        }
+        
+        .winner-team-name {
+            font-size: 2.5rem;
+        }
+        
+        .winner-score {
+            font-size: 3rem;
+        }
+        
+        .mvp-name {
+            font-size: 2rem;
+        }
+        
+        .standings-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="results-screen screen active">
+    <div class="confetti" id="confetti"></div>
+    
+    <div class="trophy-animation">🏆</div>
+    <h1 class="winner-announcement">CHAMPIONS!</h1>
+    
+    <div class="winner-card" id="winnerCard">
+        <h2 class="winner-team-name" id="winnerTeamName">Team Name</h2>
+        <div class="winner-score" id="winnerScore">0 POINTS</div>
+        <div class="winner-members" id="winnerMembers">
+            <!-- Team members will be listed here -->
+        </div>
+        <p class="prize-info">🎉 Each member wins Discord Nitro! 🎉</p>
+    </div>
+
+    <div class="mvp-section" id="mvpSection">
+        <div class="mvp-crown">👑</div>
+        <h3 class="mvp-title">Most Valuable Player</h3>
+        <div class="mvp-name" id="mvpName">Player Name</div>
+        <div class="mvp-stats" id="mvpStats">0 Points • 0 Assists</div>
+        <div class="prize-info">🎁 WINS 1 YEAR OF NITRO + GIFTED TWITCH SUB! 🎁</div>
+        <div class="discord-id" id="mvpDiscord">Discord: Name#0000</div>
+    </div>
+
+    <div class="all-standings">
+        <h2 class="standings-title">Final Standings</h2>
+        <div class="standings-grid" id="standingsGrid">
+            <!-- All team standings will be listed here -->
+        </div>
+    </div>
+
+    <button class="play-again-btn" id="playAgainBtn" style="display: none;">
+        PLAY AGAIN 🎮
+    </button>
+</div>
+
+<script>
+    // Get game state from parent
+    const gameState = window.parent.gameState;
+    const db = window.parent.firebase.database();
+    
+    // State
+    let teams = {};
+    let players = {};
+    
+    // Initialize
+    loadResults();
+    createConfetti();
+    
+    async function loadResults() {
+        if (!gameState.gameId) return;
+        
+        try {
+            // Get final data
+            const gameSnapshot = await db.ref(`games/${gameState.gameId}`).once('value');
+            const gameData = gameSnapshot.val();
+            
+            teams = gameData.teams || {};
+            players = gameData.players || {};
+            
+            // Calculate results
+            displayResults();
+            
+            // Send final Discord notification
+            sendFinalResults();
+            
+        } catch (error) {
+            console.error('Error loading results:', error);
+        }
+    }
+    
+    function displayResults() {
+        // Sort teams by score
+        const sortedTeams = Object.values(teams).sort((a, b) => (b.score || 0) - (a.score || 0));
+        const winningTeam = sortedTeams[0];
+        
+        if (!winningTeam) return;
+        
+        // Display winner
+        document.getElementById('winnerTeamName').textContent = winningTeam.name;
+        document.getElementById('winnerTeamName').style.color = winningTeam.color;
+        document.getElementById('winnerScore').textContent = `${winningTeam.score || 0} POINTS`;
+        
+        // Display winning team members
+        const winningMembers = Object.values(players).filter(p => p.teamId === winningTeam.id);
+        const mvp = winningMembers.reduce((best, player) => 
+            (player.score || 0) > (best.score || 0) ? player : best
+        , winningMembers[0]);
+        
+        document.getElementById('winnerMembers').innerHTML = winningMembers.map(member => `
+            <div class="winner-member ${member.id === mvp?.id ? 'mvp' : ''}">
+                ${member.name} ${member.id === mvp?.id ? '👑' : ''}
+            </div>
+        `).join('');
+        
+        // Display MVP
+        if (mvp) {
+            document.getElementById('mvpName').textContent = mvp.name;
+            document.getElementById('mvpStats').textContent = `${mvp.score || 0} Points`;
+            document.getElementById('mvpDiscord').textContent = `Discord: ${mvp.discordId}`;
+        }
+        
+        // Display all standings
+        document.getElementById('standingsGrid').innerHTML = sortedTeams.map((team, idx) => {
+            const teamMembers = Object.values(players).filter(p => p.teamId === team.id);
+            const positionClass = idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : '';
+            
+            return `
+                <div class="standing-card" style="--team-color: ${team.color}">
+                    <div class="standing-position ${positionClass}">
+                        ${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '#' + (idx + 1)}
+                    </div>
+                    <h3 class="standing-team-name" style="color: ${team.color}">${team.name}</h3>
+                    <p class="standing-score">${team.score || 0} Points</p>
+                    <div class="standing-members">
+                        ${teamMembers.map(m => m.name).join(' • ')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Show play again for host
+        if (gameState.isHost) {
+            document.getElementById('playAgainBtn').style.display = 'inline-block';
+            document.getElementById('playAgainBtn').addEventListener('click', playAgain);
+        }
+    }
+    
+    function createConfetti() {
+        const confettiContainer = document.getElementById('confetti');
+        const colors = ['#fbbf24', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#10b981'];
+        
+        for (let i = 0; i < 100; i++) {
+            const piece = document.createElement('div');
+            piece.className = 'confetti-piece';
+            piece.style.left = Math.random() * 100 + '%';
+            piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            piece.style.animationDelay = Math.random() * 3 + 's';
+            piece.style.animationDuration = (3 + Math.random() * 2) + 's';
+            confettiContainer.appendChild(piece);
+        }
+        
+        // Remove confetti after 10 seconds
+        setTimeout(() => {
+            confettiContainer.innerHTML = '';
+        }, 10000);
+    }
+    
+    async function sendFinalResults() {
+        if (!gameState.isHost) return;
+        
+        const sortedTeams = Object.values(teams).sort((a, b) => (b.score || 0) - (a.score || 0));
+        const winningTeam = sortedTeams[0];
+        
+        if (!winningTeam) return;
+        
+        const winningMembers = Object.values(players).filter(p => p.teamId === winningTeam.id);
+        const mvp = winningMembers.reduce((best, player) => 
+            (player.score || 0) > (best.score || 0) ? player : best
+        , winningMembers[0]);
+        
+        const embed = {
+            title: "🏆 GAME OVER - FINAL RESULTS! 🏆",
+            color: 0xfbbf24,
+            fields: [
+                {
+                    name: "🥇 WINNING TEAM",
+                    value: `**${winningTeam.name}** - ${winningTeam.score || 0} points`,
+                    inline: false
+                },
+                {
+                    name: "👑 MVP",
+                    value: `**${mvp?.name || 'Unknown'}** (${mvp?.score || 0} points)\nDiscord: ${mvp?.discordId || 'Unknown'}`,
+                    inline: false
+                },
+                {
+                    name: "🎁 PRIZES",
+                    value: "**Team:** Discord Nitro for each member\n**MVP:** 1 Year Nitro + Gifted Twitch Sub",
+                    inline: false
+                },
+                {
+                    name: "📊 Final Standings",
+                    value: sortedTeams.map((team, idx) => 
+                        `${idx + 1}. ${team.name} - ${team.score || 0} pts`
+                    ).join('\n'),
+                    inline: false
+                }
+            ],
+            timestamp: new Date().toISOString(),
+            footer: {
+                text: "Thanks for playing Fanum Trivia!",
+                icon_url: "https://res.cloudinary.com/dcyvxzhnl/image/upload/v1749096874/image_2025-06-05_001433624_qn0xue.png"
+            }
+        };
+        
+        await window.parent.sendDiscordNotification('', embed);
+    }
+    
+    async function playAgain() {
+        if (!gameState.isHost) return;
+        
+        if (confirm('Start a new game? All current data will be cleared.')) {
+            try {
+                // Reset game
+                await db.ref(`games/${gameState.gameId}`).update({
+                    status: 'waiting',
+                    teams: null,
+                    players: null,
+                    currentTeamIndex: 0,
+                    currentQuestion: null,
+                    turnTimeLeft: 35,
+                    answeredQuestions: null,
+                    currentSuggestions: null,
+                    startedAt: null
+                });
+                
+                // Redirect to main menu
+                window.location.reload();
+                
+            } catch (error) {
+                console.error('Error resetting game:', error);
+            }
+        }
+    }
+</script>
