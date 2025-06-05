@@ -1,7 +1,9 @@
 import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
 
 export default defineConfig({
-  output: 'static', // Changed from 'server'
-  site: 'https://yourusername.github.io',
-  base: '/fanumtrivia', // Your repo name
+  output: 'server',
+  adapter: node({
+    mode: 'standalone'
+  })
 });
