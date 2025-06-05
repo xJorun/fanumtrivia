@@ -1,0 +1,746 @@
+---
+// src/pages/index.astro
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fanum Discord Trivia Championship</title>
+    
+    <!-- Firebase SDK for StackBlitz -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, push, remove, get, child, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        
+        window.firebase = {
+            initializeApp,
+            database: () => ({ ref, set, onValue, push, remove, get, child, onDisconnect }),
+            auth: () => ({ signInAnonymously })
+        };
+        window.firebaseImports = { getDatabase, ref, set, onValue, push, remove, get, child, onDisconnect, getAuth, signInAnonymously };
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(45deg, #1a0033, #000, #1a0033);
+            overflow: hidden;
+        }
+
+        .bg-animation {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: url('https://res.cloudinary.com/dcyvxzhnl/image/upload/v1749096920/image_2025-06-05_001519454_dbvlat.png');
+            background-size: 400px;
+            opacity: 0.1;
+            animation: bgScroll 30s linear infinite;
+        }
+
+        @keyframes bgScroll {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat 10s infinite;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) scale(0);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(90vh) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(10vh) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .screen.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Main Menu */
+        .main-menu {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 3rem;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .logo {
+            width: 300px;
+            height: auto;
+            filter: drop-shadow(0 0 50px rgba(139, 92, 246, 0.8));
+        }
+
+        .game-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 5rem;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #8b5cf6, #ec4899, #8b5cf6);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease-in-out infinite;
+            text-shadow: 0 0 80px rgba(139, 92, 246, 0.5);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #a78bfa;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeInUp 1s 0.5s forwards;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 2rem;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 
+                0 0 100px rgba(139, 92, 246, 0.3),
+                inset 0 0 50px rgba(139, 92, 246, 0.1);
+            transform: perspective(1000px) rotateX(5deg);
+            animation: menuCardEntrance 1s ease-out;
+        }
+
+        @keyframes menuCardEntrance {
+            from {
+                opacity: 0;
+                transform: perspective(1000px) rotateX(30deg) translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: perspective(1000px) rotateX(5deg) translateY(0);
+            }
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #a78bfa;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.125rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .input:focus {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .join-btn {
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .join-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .join-btn:hover::before {
+            left: 100%;
+        }
+
+        .join-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.5);
+        }
+
+        .join-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .prize-banner {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            color: #fbbf24;
+            animation: prizePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes prizePulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 0 0 40px rgba(251, 191, 36, 0.5);
+            }
+        }
+
+        /* Host Badge */
+        .host-badge {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+            animation: hostPulse 2s ease-in-out infinite;
+            z-index: 100;
+        }
+
+        @keyframes hostPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #8b5cf6;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Host Controls */
+        .host-controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 2px solid #8b5cf6;
+        }
+
+        .host-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid #8b5cf6;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .host-btn:hover {
+            background: rgba(139, 92, 246, 0.4);
+            transform: scale(1.05);
+        }
+
+        .host-btn.danger {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+        }
+
+        .host-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 3rem;
+            }
+            
+            .logo {
+                width: 200px;
+            }
+            
+            .menu-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg">
+        <div class="bg-animation"></div>
+        <div class="particles" id="particles"></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Host Badge (hidden by default) -->
+        <div class="host-badge" id="hostBadge" style="display: none;">
+            👑 HOST
+        </div>
+
+        <!-- Main Menu -->
+        <div class="screen main-menu active" id="mainMenu">
+            <div class="logo-container">
+                <img src="https://res.cloudinary.com/dcyvxzhnl/image/upload/v1749096874/image_2025-06-05_001433624_qn0xue.png" 
+                     alt="Fanum Logo" 
+                     class="logo">
+            </div>
+            
+            <h1 class="game-title">TRIVIA CHAMPIONSHIP</h1>
+            <p class="subtitle">Battle for Discord Supremacy</p>
+            
+            <div class="menu-card">
+                <div class="input-group">
+                    <label class="input-label">Player Name</label>
+                    <input type="text" class="input" id="playerName" placeholder="Enter your name" maxlength="20">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Discord ID</label>
+                    <input type="text" class="input" id="discordId" placeholder="YourName#1234">
+                </div>
+                
+                <button class="join-btn" id="joinBtn" disabled>
+                    ENTER THE ARENA
+                </button>
+                
+                <div class="prize-banner">
+                    🏆 Winners get Discord Nitro • MVP gets 1 YEAR Nitro + Twitch Sub! 👑
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Container -->
+        <div id="gameContainer"></div>
+
+        <!-- Host Controls (hidden by default) -->
+        <div class="host-controls" id="hostControls" style="display: none;">
+            <button class="host-btn" id="skipTurnBtn">⏭️ Skip Turn</button>
+            <button class="host-btn" id="pauseGameBtn">⏸️ Pause Game</button>
+            <button class="host-btn" id="forceStartBtn">🚀 Force Start</button>
+            <button class="host-btn danger" id="endGameBtn">🛑 End Game</button>
+        </div>
+    </div>
+
+    <script define:vars={{ ADMIN_DISCORD_ID: '1049833923947016302' }}>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJD2YAQQ-J2FSPYAveUMiGZwFKCxpA2ZM",
+            authDomain: "trivia-7991b.firebaseapp.com",
+            databaseURL: "https://trivia-7991b-default-rtdb.firebaseio.com",
+            projectId: "trivia-7991b",
+            storageBucket: "trivia-7991b.firebasestorage.app",
+            messagingSenderId: "195180427387",
+            appId: "1:195180427387:web:791059ee47d7705c41cade",
+            measurementId: "G-684D195P99"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        // Discord Webhook
+        const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1380037745942069410/Ol0oCrT0kEHE6TTjCuHYG5okCLFAc0jPVjIN7QeDz1WEuRm9qI6fcP3lD85QxSjao3U6';
+
+        // Game State
+        let gameState = {
+            gameId: null,
+            currentUserId: null,
+            currentPlayer: null,
+            isHost: false,
+            status: 'menu'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            setupEventListeners();
+            initializeAuth();
+        });
+
+        // Create particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Initialize Auth
+        async function initializeAuth() {
+            try {
+                const userCredential = await auth.signInAnonymously();
+                gameState.currentUserId = userCredential.user.uid;
+                console.log('Authenticated:', gameState.currentUserId);
+            } catch (error) {
+                console.error('Auth error:', error);
+            }
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Input validation
+            document.getElementById('playerName').addEventListener('input', validateInputs);
+            document.getElementById('discordId').addEventListener('input', validateInputs);
+            
+            // Join button
+            document.getElementById('joinBtn').addEventListener('click', joinGame);
+            
+            // Host controls
+            document.getElementById('skipTurnBtn').addEventListener('click', () => hostAction('skipTurn'));
+            document.getElementById('pauseGameBtn').addEventListener('click', () => hostAction('pauseGame'));
+            document.getElementById('forceStartBtn').addEventListener('click', () => hostAction('forceStart'));
+            document.getElementById('endGameBtn').addEventListener('click', () => hostAction('endGame'));
+        }
+
+        function validateInputs() {
+            const name = document.getElementById('playerName').value.trim();
+            const discord = document.getElementById('discordId').value.trim();
+            document.getElementById('joinBtn').disabled = !name || !discord;
+        }
+
+        // Join Game
+        async function joinGame() {
+            const name = document.getElementById('playerName').value.trim();
+            const discordId = document.getElementById('discordId').value.trim();
+            
+            if (!name || !discordId) return;
+            
+            // Check if admin
+            const isAdmin = discordId === ADMIN_DISCORD_ID;
+            
+            try {
+                // Find or create game
+                const gamesRef = db.ref('games');
+                const snapshot = await gamesRef.orderByChild('status').equalTo('waiting').limitToFirst(1).once('value');
+                
+                let gameId;
+                let isNewGame = false;
+                
+                if (snapshot.exists()) {
+                    gameId = Object.keys(snapshot.val())[0];
+                } else {
+                    const newGame = gamesRef.push();
+                    gameId = newGame.key;
+                    isNewGame = true;
+                    
+                    await newGame.set({
+                        status: 'waiting',
+                        createdAt: firebase.database.ServerValue.TIMESTAMP,
+                        host: gameState.currentUserId,
+                        settings: {
+                            maxTeamSize: 5,
+                            turnTime: 35,
+                            autoStart: false
+                        }
+                    });
+                }
+                
+                gameState.gameId = gameId;
+                
+                // Create player
+                gameState.currentPlayer = {
+                    id: gameState.currentUserId,
+                    name: name,
+                    discordId: discordId,
+                    teamId: null,
+                    score: 0,
+                    isLeader: false,
+                    isHost: isNewGame || isAdmin,
+                    isAdmin: isAdmin,
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                // Add player to game
+                await db.ref(`games/${gameId}/players/${gameState.currentUserId}`).set(gameState.currentPlayer);
+                
+                // If admin, update host status
+                if (isAdmin && !isNewGame) {
+                    await db.ref(`games/${gameId}/host`).set(gameState.currentUserId);
+                    gameState.isHost = true;
+                }
+                
+                // Setup game listeners
+                setupGameListeners();
+                
+                // Load waiting room
+                loadWaitingRoom();
+                
+                // Send Discord notification
+                sendDiscordNotification(`🎮 **${name}** joined the game${isAdmin ? ' as HOST' : ''}`);
+                
+            } catch (error) {
+                console.error('Error joining game:', error);
+                alert('Failed to join game. Please try again.');
+            }
+        }
+
+        // Setup Game Listeners
+        function setupGameListeners() {
+            if (!gameState.gameId) return;
+            
+            const gameRef = db.ref(`games/${gameState.gameId}`);
+            
+            // Status listener
+            gameRef.child('status').on('value', (snapshot) => {
+                const status = snapshot.val();
+                if (status === 'playing' && gameState.status === 'waiting') {
+                    loadGameScreen();
+                } else if (status === 'finished') {
+                    loadResultsScreen();
+                }
+                gameState.status = status;
+            });
+            
+            // Host listener
+            gameRef.child('host').on('value', (snapshot) => {
+                const hostId = snapshot.val();
+                gameState.isHost = hostId === gameState.currentUserId || gameState.currentPlayer?.isAdmin;
+                updateHostUI();
+            });
+            
+            // Player disconnect handling
+            const playerRef = db.ref(`games/${gameState.gameId}/players/${gameState.currentUserId}`);
+            playerRef.onDisconnect().remove();
+        }
+
+        // Update Host UI
+        function updateHostUI() {
+            const hostBadge = document.getElementById('hostBadge');
+            const hostControls = document.getElementById('hostControls');
+            
+            if (gameState.isHost) {
+                hostBadge.style.display = 'block';
+                if (gameState.status !== 'menu') {
+                    hostControls.style.display = 'flex';
+                }
+            } else {
+                hostBadge.style.display = 'none';
+                hostControls.style.display = 'none';
+            }
+        }
+
+        // Host Actions
+        async function hostAction(action) {
+            if (!gameState.isHost || !gameState.gameId) return;
+            
+            const gameRef = db.ref(`games/${gameState.gameId}`);
+            
+            switch (action) {
+                case 'skipTurn':
+                    await gameRef.child('skipTurn').set(Date.now());
+                    break;
+                    
+                case 'pauseGame':
+                    const currentStatus = await gameRef.child('status').once('value');
+                    if (currentStatus.val() === 'playing') {
+                        await gameRef.child('status').set('paused');
+                        document.getElementById('pauseGameBtn').innerHTML = '▶️ Resume';
+                    } else if (currentStatus.val() === 'paused') {
+                        await gameRef.child('status').set('playing');
+                        document.getElementById('pauseGameBtn').innerHTML = '⏸️ Pause';
+                    }
+                    break;
+                    
+                case 'forceStart':
+                    // Can start with just 1 player for testing
+                    await gameRef.child('status').set('playing');
+                    sendDiscordNotification('🚀 **Game Force Started by Host!**');
+                    break;
+                    
+                case 'endGame':
+                    if (confirm('Are you sure you want to end the game?')) {
+                        await gameRef.child('status').set('finished');
+                        sendDiscordNotification('🛑 **Game Ended by Host**');
+                    }
+                    break;
+            }
+        }
+
+        // Load Waiting Room
+        async function loadWaitingRoom() {
+            const container = document.getElementById('gameContainer');
+            container.innerHTML = await fetch('/waiting-room').then(r => r.text());
+            
+            // Hide main menu
+            document.getElementById('mainMenu').classList.remove('active');
+            
+            // Setup waiting room listeners
+            setupWaitingRoomListeners();
+        }
+
+        // Load Game Screen
+        async function loadGameScreen() {
+            const container = document.getElementById('gameContainer');
+            container.innerHTML = await fetch('/game-board').then(r => r.text());
+            
+            // Setup game listeners
+            setupGameBoardListeners();
+        }
+
+        // Load Results Screen
+        async function loadResultsScreen() {
+            const container = document.getElementById('gameContainer');
+            container.innerHTML = await fetch('/results').then(r => r.text());
+        }
+
+        // Send Discord Notification
+        async function sendDiscordNotification(message, embed = null) {
+            try {
+                await fetch(DISCORD_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: message,
+                        embeds: embed ? [embed] : undefined,
+                        username: 'Fanum Trivia Bot',
+                        avatar_url: 'https://res.cloudinary.com/dcyvxzhnl/image/upload/v1749096874/image_2025-06-05_001433624_qn0xue.png'
+                    })
+                });
+            } catch (error) {
+                console.error('Discord webhook error:', error);
+            }
+        }
+
+        // Stub functions for component loading
+        function setupWaitingRoomListeners() {
+            // Will be implemented in waiting-room component
+        }
+        
+        function setupGameBoardListeners() {
+            // Will be implemented in game-board component
+        }
+    </script>
+</body>
+</html>
