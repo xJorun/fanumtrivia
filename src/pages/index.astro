@@ -1,256 +1,2140 @@
----
-export const prerender = false;
----
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fanum Trivia Championship</title>
+    <title>Fanum Discord Trivia Championship</title>
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #1a1a1a;
-            color: white;
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;900&display=swap');
+        
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(45deg, #1a0033, #000, #1a0033);
+            overflow: hidden;
+        }
+
+        .bg-animation {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: url('https://res.cloudinary.com/dcyvxzhnl/image/upload/v1749096920/image_2025-06-05_001519454_dbvlat.png');
+            background-size: 400px;
+            opacity: 0.1;
+            animation: bgScroll 30s linear infinite;
+        }
+
+        @keyframes bgScroll {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat 10s infinite;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) scale(0);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(90vh) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(10vh) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 10;
             min-height: 100vh;
         }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+
+        /* Screens */
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .screen.active {
+            display: flex;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Main Menu Styles */
+        .main-menu {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
         }
-        
-        h1 {
-            color: #8b5cf6;
+
+        .logo-container {
+            margin-bottom: 3rem;
+            animation: logoFloat 3s ease-in-out infinite;
         }
-        
-        .status {
-            padding: 20px;
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .logo {
+            width: 300px;
+            height: auto;
+            filter: drop-shadow(0 0 50px rgba(139, 92, 246, 0.8));
+        }
+
+        .game-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 5rem;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #8b5cf6, #ec4899, #8b5cf6);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease-in-out infinite;
+            text-shadow: 0 0 80px rgba(139, 92, 246, 0.5);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #a78bfa;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeInUp 1s 0.5s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 2rem;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 
+                0 0 100px rgba(139, 92, 246, 0.3),
+                inset 0 0 50px rgba(139, 92, 246, 0.1);
+            transform: perspective(1000px) rotateX(5deg);
+            animation: menuCardEntrance 1s ease-out;
+        }
+
+        @keyframes menuCardEntrance {
+            from {
+                opacity: 0;
+                transform: perspective(1000px) rotateX(30deg) translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: perspective(1000px) rotateX(5deg) translateY(0);
+            }
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #a78bfa;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.125rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .input:focus {
+            border-color: #8b5cf6;
             background: rgba(139, 92, 246, 0.1);
-            border: 1px solid #8b5cf6;
-            border-radius: 8px;
-            margin: 20px 0;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
         }
-        
-        input {
-            padding: 10px;
-            margin: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #8b5cf6;
-            color: white;
-            border-radius: 4px;
-            width: 200px;
-        }
-        
-        button {
-            padding: 10px 20px;
-            margin: 10px;
-            background: #8b5cf6;
+
+        .join-btn {
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
             border: none;
+            border-radius: 1rem;
             color: white;
-            border-radius: 4px;
-            cursor: pointer;
+            font-size: 1.25rem;
             font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
         }
-        
-        button:hover {
-            background: #7c3aed;
+
+        .join-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
         }
-        
-        button:disabled {
+
+        .join-btn:hover::before {
+            left: 100%;
+        }
+
+        .join-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.5);
+        }
+
+        .join-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
-        .players {
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
+
+        .prize-banner {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            color: #fbbf24;
+            animation: prizePulse 2s ease-in-out infinite;
         }
-        
-        .player {
-            padding: 8px;
-            margin: 4px;
+
+        @keyframes prizePulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 0 0 40px rgba(251, 191, 36, 0.5);
+            }
+        }
+
+        /* Waiting Room Styles */
+        .waiting-room {
+            width: 100%;
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .waiting-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .room-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 3rem;
+            background: linear-gradient(45deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .room-subtitle {
+            color: #6b7280;
+            font-size: 1.125rem;
+        }
+
+        .room-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .teams-area {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+        }
+
+        .create-team-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 1rem;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .team-name-input {
+            flex: 1;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .team-name-input:focus {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .create-team-btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border: none;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .create-team-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s;
+        }
+
+        .create-team-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .create-team-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .team-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--team-color);
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--team-color);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+        }
+
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .team-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .team-slots {
+            font-size: 0.875rem;
+            color: #a78bfa;
+            padding: 0.25rem 0.75rem;
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 1rem;
+        }
+
+        .team-members {
+            margin-bottom: 1rem;
+            min-height: 200px;
+        }
+
+        .member {
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            animation: memberSlide 0.3s ease-out;
+        }
+
+        @keyframes memberSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .member.leader {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .member:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .crown {
+            font-size: 1.25rem;
+            filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.8));
+            animation: crownFloat 2s ease-in-out infinite;
+        }
+
+        @keyframes crownFloat {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-3px) rotate(5deg); }
+        }
+
+        .member-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .kick-btn {
+            padding: 0.25rem 0.5rem;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            border-radius: 0.25rem;
+            color: #ef4444;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .member:hover .kick-btn {
+            opacity: 1;
+        }
+
+        .join-team-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .join-team-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .join-team-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .players-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #a78bfa;
+        }
+
+        .player-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 2rem;
+        }
+
+        .player-item {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .player-item.no-team {
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.1);
+            animation: noTeamPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes noTeamPulse {
+            0%, 100% { border-color: rgba(239, 68, 68, 0.5); }
+            50% { border-color: rgba(239, 68, 68, 0.8); }
+        }
+
+        .player-name {
+            font-weight: 600;
+        }
+
+        .invite-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            border-radius: 0.5rem;
+            color: #93c5fd;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .invite-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: scale(1.05);
+        }
+
+        .stats-section {
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 1.125rem;
+        }
+
+        .stat-label {
+            color: #6b7280;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+
+        .start-section {
+            margin-top: 3rem;
+            text-align: center;
+            padding: 2rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            border-radius: 1rem;
+            animation: startAppear 0.5s ease-out;
+        }
+
+        @keyframes startAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .ready-text {
+            font-size: 1.25rem;
+            color: #86efac;
+            margin-bottom: 1.5rem;
+        }
+
+        .start-game-btn {
+            padding: 1.5rem 3rem;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            animation: startBtnPulse 2s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-game-btn::after {
+            content: '🚀';
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0;
+            top: 50%;
+            left: -50px;
+            transform: translateY(-50%);
+            animation: rocketFly 3s ease-in-out infinite;
+        }
+
+        @keyframes rocketFly {
+            0% {
+                left: -50px;
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                left: calc(100% + 50px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes startBtnPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 50px rgba(34, 197, 94, 0.8);
+            }
+        }
+
+        .start-game-btn:hover {
+            animation-play-state: paused;
+            transform: scale(1.1);
+            box-shadow: 0 0 60px rgba(34, 197, 94, 1);
+        }
+
+        /* Game Board Styles */
+        .game-screen {
+            width: 100%;
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+            animation: headerShine 3s linear infinite;
+        }
+
+        @keyframes headerShine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .current-team {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px currentColor;
+            animation: teamPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes teamPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .turn-timer {
+            font-size: 4rem;
+            font-weight: bold;
+            font-family: 'Bebas Neue', cursive;
+            letter-spacing: 3px;
+            color: #8b5cf6;
+            text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+            margin-bottom: 1rem;
+        }
+
+        .turn-timer.warning {
+            color: #ef4444;
+            animation: timerWarning 1s ease-in-out infinite;
+        }
+
+        @keyframes timerWarning {
+            0%, 100% { 
+                transform: scale(1);
+                text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+            }
+            50% { 
+                transform: scale(1.1);
+                text-shadow: 0 0 40px rgba(239, 68, 68, 1);
+            }
+        }
+
+        .turn-instruction {
+            color: #6b7280;
+            font-size: 1.125rem;
+        }
+
+        .board-container {
+            max-width: 1200px;
+            margin: 0 auto 3rem;
+            width: 100%;
+        }
+
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .category {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+        }
+
+        .category-title {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            padding: 1.25rem;
+            font-weight: bold;
+            font-size: 1.125rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .questions {
+            padding: 0.5rem;
+        }
+
+        .question-btn {
+            width: 100%;
+            padding: 2rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: 'Bebas Neue', cursive;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .question-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.6), transparent);
+            transition: all 0.5s;
+            transform: translate(-50%, -50%);
+        }
+
+        .question-btn:hover:not(:disabled)::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .question-btn:hover:not(:disabled) {
+            border-color: #8b5cf6;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .question-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .question-btn.answered {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+        }
+
+        .question-btn.current {
+            animation: currentQuestion 1s ease-in-out infinite;
+            border-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        @keyframes currentQuestion {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+            }
+        }
+
+        /* Question Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            backdrop-filter: blur(20px);
+            border: 2px solid #8b5cf6;
+            border-radius: 2rem;
+            padding: 3rem;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 0 100px rgba(139, 92, 246, 0.5);
+            animation: modalEnter 0.5s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.8) rotateX(20deg);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) rotateX(0);
+            }
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .question-category {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #a78bfa;
+        }
+
+        .question-points {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+        }
+
+        .question-text {
+            font-size: 2rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            text-align: center;
+            animation: questionAppear 0.5s ease-out;
+        }
+
+        @keyframes questionAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .answer-section {
+            margin-top: 2rem;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .answer-input:focus {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .submit-answer-btn {
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-answer-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -100%;
+            width: 100%;
+            height: 200%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateY(-50%) rotate(45deg);
+            transition: left 0.5s;
+        }
+
+        .submit-answer-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-answer-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 40px rgba(34, 197, 94, 0.4);
+        }
+
+        .submit-answer-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .waiting-message {
+            text-align: center;
+            font-size: 1.25rem;
+            color: #6b7280;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            position: fixed;
+            left: 2rem;
+            top: 2rem;
+            width: 320px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.2);
+        }
+
+        .scoreboard-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+        }
+
+        .team-scores {
+            margin-bottom: 2rem;
+        }
+
+        .team-score-item {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .team-score-item.current {
+            background: rgba(139, 92, 246, 0.2);
+            border: 2px solid #8b5cf6;
+            transform: scale(1.05);
+            animation: currentTeamPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes currentTeamPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+        }
+
+        .team-score-name {
+            font-weight: bold;
+        }
+
+        .team-score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Results Screen Styles */
+        .results-screen {
+            width: 100%;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .trophy-animation {
+            font-size: 10rem;
+            margin-bottom: 2rem;
+            animation: trophyBounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 50px rgba(255, 215, 0, 0.8));
+        }
+
+        @keyframes trophyBounce {
+            0%, 100% { 
+                transform: translateY(0) rotate(-5deg);
+            }
+            50% { 
+                transform: translateY(-30px) rotate(5deg);
+            }
+        }
+
+        .winner-announcement {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 6rem;
+            letter-spacing: 3px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b, #fbbf24);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: goldShine 3s ease-in-out infinite;
+            margin-bottom: 3rem;
+            text-shadow: 0 0 80px rgba(251, 191, 36, 0.5);
+        }
+
+        @keyframes goldShine {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .winner-card {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(251, 191, 36, 0.1));
+            backdrop-filter: blur(10px);
+            border: 3px solid #fbbf24;
+            border-radius: 2rem;
+            padding: 3rem;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            box-shadow: 0 0 100px rgba(255, 215, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .winner-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            animation: winnerShine 4s linear infinite;
+        }
+
+        @keyframes winnerShine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .winner-team-name {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px currentColor;
+            position: relative;
+            z-index: 1;
+        }
+
+        .winner-score {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+            animation: scorePulse 2s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes scorePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .winner-members {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .winner-member {
+            padding: 1rem 2rem;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            border-radius: 1rem;
+            font-weight: bold;
+            font-size: 1.125rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .winner-member:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .winner-member.mvp {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+            border: 2px solid #8b5cf6;
+            animation: mvpGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes mvpGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+        }
+
+        .play-again-btn {
+            margin-top: 3rem;
+            padding: 1.5rem 3rem;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+        }
+
+        .play-again-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fbbf24;
+            animation: confettiFall 3s linear infinite;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 1024px) {
+            .room-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .players-panel {
+                position: static;
+                order: -1;
+                margin-bottom: 2rem;
+            }
+            
+            .scoreboard {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 3rem;
+            }
+            
+            .logo {
+                width: 200px;
+            }
+            
+            .menu-card {
+                padding: 2rem;
+            }
+            
+            .teams-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .create-team-section {
+                flex-direction: column;
+            }
+            
+            .board-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .question-btn {
+                padding: 1.5rem;
+                font-size: 1.5rem;
+            }
+            
+            .modal-content {
+                padding: 2rem;
+            }
+            
+            .question-text {
+                font-size: 1.5rem;
+            }
+            
+            .winner-announcement {
+                font-size: 3rem;
+            }
+            
+            .winner-team-name {
+                font-size: 2.5rem;
+            }
+            
+            .winner-score {
+                font-size: 3rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Fanum Discord Trivia Championship</h1>
-        
-        <div class="status">
-            <p id="statusText">Initializing...</p>
+    <div class="animated-bg">
+        <div class="bg-animation"></div>
+        <div class="particles" id="particles"></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Main Menu -->
+        <div class="screen main-menu active" id="mainMenu">
+            <div class="logo-container">
+                <img src="https://res.cloudinary.com/dcyvxzhnl/image/upload/v1749096874/image_2025-06-05_001433624_qn0xue.png" 
+                     alt="Fanum Logo" 
+                     class="logo">
+            </div>
+            
+            <h1 class="game-title">TRIVIA CHAMPIONSHIP</h1>
+            <p class="subtitle">Battle for Discord Supremacy</p>
+            
+            <div class="menu-card">
+                <div class="input-group">
+                    <label class="input-label">Player Name</label>
+                    <input type="text" class="input" id="playerName" placeholder="Enter your name" maxlength="20">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Discord ID</label>
+                    <input type="text" class="input" id="discordId" placeholder="YourName#1234">
+                </div>
+                
+                <button class="join-btn" id="joinBtn" disabled>
+                    ENTER THE ARENA
+                </button>
+                
+                <div class="prize-banner">
+                    🏆 Winners get Discord Nitro • MVP gets 1 YEAR Nitro + Twitch Sub! 👑
+                </div>
+            </div>
         </div>
-        
-        <div id="loginForm">
-            <h2>Join Game</h2>
-            <div>
-                <input type="text" id="playerName" placeholder="Your Name" />
+
+        <!-- Waiting Room -->
+        <div class="screen waiting-room" id="waitingRoom">
+            <div class="waiting-header">
+                <h1 class="room-title">TEAM FORMATION</h1>
+                <p class="room-subtitle">Create or join a team • Max 5 players per team</p>
             </div>
-            <div>
-                <input type="text" id="discordId" placeholder="Discord ID" />
+
+            <div class="room-layout">
+                <div class="teams-area">
+                    <div class="create-team-section">
+                        <input type="text" 
+                               class="team-name-input" 
+                               id="teamNameInput" 
+                               placeholder="Enter team name..."
+                               maxlength="20">
+                        <button class="create-team-btn" id="createTeamBtn">
+                            Create Team
+                        </button>
+                    </div>
+
+                    <div class="teams-grid" id="teamsGrid">
+                        <!-- Teams will be dynamically added here -->
+                    </div>
+
+                    <div class="start-section" id="startSection">
+                        <p class="ready-text">🎮 All systems ready! Let's begin!</p>
+                        <button class="start-game-btn" id="startGameBtn">
+                            LAUNCH GAME
+                        </button>
+                    </div>
+                </div>
+
+                <div class="players-panel">
+                    <h3 class="panel-title">Players Without Teams</h3>
+                    <div class="player-list" id="noTeamPlayersList">
+                        <!-- Players without teams listed here -->
+                    </div>
+                    
+                    <div class="stats-section">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Players:</span>
+                            <span class="stat-value" id="totalPlayers">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Teams:</span>
+                            <span class="stat-value" id="totalTeams">0</span>
+                        </div>
+                    </div>
+                    
+                    <p style="font-size: 0.875rem; color: #6b7280; margin-top: 1rem; text-align: center;">
+                        Players without teams will be auto-assigned when game starts
+                    </p>
+                </div>
             </div>
-            <button id="joinBtn" onclick="joinGame()" disabled>Join Game</button>
         </div>
-        
-        <div id="gameRoom" style="display: none;">
-            <h2>Game Room</h2>
-            <p>Game ID: <span id="gameId">-</span></p>
-            <div class="players">
-                <h3>Players:</h3>
-                <div id="playersList"></div>
+
+        <!-- Game Board -->
+        <div class="screen game-screen" id="gameBoard">
+            <div class="game-header">
+                <h2 class="current-team" id="currentTeamDisplay">Team Name's Turn</h2>
+                <div class="turn-timer" id="turnTimer">35</div>
+                <p class="turn-instruction" id="turnInstruction">Select a question from the board</p>
             </div>
-            <button id="startBtn" onclick="startGame()" style="display: none;">Start Game</button>
+
+            <div class="board-container">
+                <div class="board-grid" id="boardGrid">
+                    <!-- Categories and questions will be dynamically added -->
+                </div>
+            </div>
+
+            <!-- Scoreboard -->
+            <div class="scoreboard" id="scoreboard">
+                <h3 class="scoreboard-title">🏆 SCOREBOARD 🏆</h3>
+                
+                <div class="team-scores" id="teamScores">
+                    <!-- Team scores listed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Modal -->
+        <div class="modal" id="questionModal">
+            <div class="modal-content">
+                <div class="question-header">
+                    <span class="question-category" id="modalCategory">Category</span>
+                    <span class="question-points" id="modalPoints">$100</span>
+                </div>
+                
+                <p class="question-text" id="modalQuestion">Question will appear here</p>
+                
+                <div class="answer-section" id="answerSection">
+                    <!-- Answer input or waiting message -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="screen results-screen" id="resultsScreen">
+            <div class="confetti" id="confetti"></div>
+            
+            <div class="trophy-animation">🏆</div>
+            <h1 class="winner-announcement">CHAMPIONS!</h1>
+            
+            <div class="winner-card" id="winnerCard">
+                <h2 class="winner-team-name" id="winnerTeamName">Team Name</h2>
+                <div class="winner-score" id="winnerScore">0 POINTS</div>
+                <div class="winner-members" id="winnerMembers">
+                    <!-- Team members will be listed here -->
+                </div>
+                <p class="prize-info">🎉 Each member wins Discord Nitro! 🎉</p>
+            </div>
+
+            <button class="play-again-btn" id="playAgainBtn">
+                PLAY AGAIN 🎮
+            </button>
         </div>
     </div>
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
     <script>
-        // Globals
-        let app, db, auth;
-        let gameState = {
-            gameId: null,
-            userId: null,
-            isHost: false,
-            players: {}
+        // Game State
+        const gameState = {
+            currentScreen: 'menu',
+            currentPlayer: null,
+            players: {},
+            teams: {},
+            currentTeamIndex: 0,
+            turnTimer: null,
+            turnTimeLeft: 35,
+            answeredQuestions: {},
+            currentQuestion: null,
+            isDemo: true
         };
 
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAJD2YAQQ-J2FSPYAveUMiGZwFKCxpA2ZM",
-            authDomain: "trivia-7991b.firebaseapp.com",
-            databaseURL: "https://trivia-7991b-default-rtdb.firebaseio.com",
-            projectId: "trivia-7991b",
-            storageBucket: "trivia-7991b.firebasestorage.app",
-            messagingSenderId: "195180427387",
-            appId: "1:195180427387:web:791059ee47d7705c41cade"
+        // Categories
+        const categories = {
+            'Little WANUM': [
+                { points: 100, q: "What does WANUM stand for?", a: "We Are Not Ur Mates" },
+                { points: 200, q: "Who started the WANUM movement?", a: "Fanum" },
+                { points: 300, q: "What year did WANUM begin?", a: "2020" },
+                { points: 400, q: "Name 3 original WANUM members", a: "Various answers accepted" },
+                { points: 500, q: "What's the WANUM hand sign?", a: "Demonstration required" }
+            ],
+            'Fanum Tax': [
+                { points: 100, q: "What is Fanum Tax?", a: "Taking food/portion" },
+                { points: 200, q: "Who gets taxed most?", a: "Kai Cenat" },
+                { points: 300, q: "Tax percentage?", a: "Whatever Fanum wants" },
+                { points: 400, q: "Name 5 taxed foods", a: "Various" },
+                { points: 500, q: "Most expensive tax?", a: "Specific incident" }
+            ],
+            'WANUMMMMM': [
+                { points: 100, q: "How many M's?", a: "5" },
+                { points: 200, q: "When to shout?", a: "When hyped" },
+                { points: 300, q: "Loudest WANUMMMMM?", a: "Debatable" },
+                { points: 400, q: "Demo proper form", a: "Performance" },
+                { points: 500, q: "Record duration?", a: "Time" }
+            ],
+            'WLTS': [
+                { points: 100, q: "What's WLTS?", a: "We Love To See It" },
+                { points: 200, q: "First use?", a: "Date/stream" },
+                { points: 300, q: "3 WLTS moments", a: "Various" },
+                { points: 400, q: "Opposite of WLTS?", a: "WHTSI" },
+                { points: 500, q: "Biggest 2024 WLTS?", a: "Event" }
+            ],
+            'Bronx Education': [
+                { points: 100, q: "Fanum's borough?", a: "The Bronx" },
+                { points: 200, q: "3 landmarks?", a: "Various" },
+                { points: 300, q: "Bronx motto?", a: "Phrase" },
+                { points: 400, q: "5 slang terms", a: "Terms" },
+                { points: 500, q: "BX vs BK beef?", a: "Cultural" }
+            ]
         };
+
+        // Team colors
+        const teamColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
         // Initialize
-        window.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            setupEventListeners();
+            loadGameState();
+        });
 
-        async function initializeApp() {
-            const statusEl = document.getElementById('statusText');
-            
-            try {
-                // Initialize Firebase
-                statusEl.textContent = 'Connecting to Firebase...';
-                app = firebase.initializeApp(firebaseConfig);
-                db = firebase.database();
-                auth = firebase.auth();
-                
-                // Sign in anonymously
-                statusEl.textContent = 'Authenticating...';
-                const userCredential = await auth.signInAnonymously();
-                gameState.userId = userCredential.user.uid;
-                
-                statusEl.textContent = 'Ready! Enter your details to join.';
-                
-                // Enable form
-                document.getElementById('joinBtn').disabled = false;
-                
-                // Setup input validation
-                document.getElementById('playerName').addEventListener('input', validateForm);
-                document.getElementById('discordId').addEventListener('input', validateForm);
-                
-            } catch (error) {
-                console.error('Initialization error:', error);
-                statusEl.textContent = 'Error: ' + error.message;
-                statusEl.style.color = '#ff4444';
+        // Create particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
             }
         }
 
-        function validateForm() {
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Main Menu
+            document.getElementById('playerName').addEventListener('input', validateInputs);
+            document.getElementById('discordId').addEventListener('input', validateInputs);
+            document.getElementById('joinBtn').addEventListener('click', joinGame);
+            
+            // Waiting Room
+            document.getElementById('createTeamBtn').addEventListener('click', createTeam);
+            document.getElementById('teamNameInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') createTeam();
+            });
+            document.getElementById('startGameBtn').addEventListener('click', startGame);
+            
+            // Results
+            document.getElementById('playAgainBtn').addEventListener('click', resetGame);
+        }
+
+        // Load game state from localStorage
+        function loadGameState() {
+            const saved = localStorage.getItem('fanumTriviaState');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.assign(gameState, data);
+                
+                if (gameState.currentScreen !== 'menu') {
+                    showScreen(gameState.currentScreen);
+                }
+            }
+        }
+
+        // Save game state
+        function saveGameState() {
+            localStorage.setItem('fanumTriviaState', JSON.stringify(gameState));
+        }
+
+        // Validate inputs
+        function validateInputs() {
             const name = document.getElementById('playerName').value.trim();
             const discord = document.getElementById('discordId').value.trim();
             document.getElementById('joinBtn').disabled = !name || !discord;
         }
 
-        async function joinGame() {
+        // Join Game
+        function joinGame() {
             const name = document.getElementById('playerName').value.trim();
             const discordId = document.getElementById('discordId').value.trim();
             
             if (!name || !discordId) return;
             
-            try {
-                // Find or create game
-                const gamesRef = db.ref('games');
-                const snapshot = await gamesRef.orderByChild('status').equalTo('waiting').limitToFirst(1).once('value');
+            // Create player
+            const playerId = Date.now().toString();
+            gameState.currentPlayer = {
+                id: playerId,
+                name: name,
+                discordId: discordId,
+                teamId: null,
+                score: 0,
+                isLeader: false
+            };
+            
+            gameState.players[playerId] = gameState.currentPlayer;
+            
+            // Move to waiting room
+            showScreen('waiting');
+            updateWaitingRoom();
+            
+            saveGameState();
+        }
+
+        // Show screen
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            switch(screenName) {
+                case 'menu':
+                    document.getElementById('mainMenu').classList.add('active');
+                    break;
+                case 'waiting':
+                    document.getElementById('waitingRoom').classList.add('active');
+                    updateWaitingRoom();
+                    break;
+                case 'game':
+                    document.getElementById('gameBoard').classList.add('active');
+                    initializeGameBoard();
+                    break;
+                case 'results':
+                    document.getElementById('resultsScreen').classList.add('active');
+                    showResults();
+                    break;
+            }
+            
+            gameState.currentScreen = screenName;
+            saveGameState();
+        }
+
+        // Create team
+        function createTeam() {
+            const teamName = document.getElementById('teamNameInput').value.trim();
+            if (!teamName || gameState.currentPlayer.teamId) return;
+            
+            const teamId = Date.now().toString();
+            const teamColor = teamColors[Object.keys(gameState.teams).length % teamColors.length];
+            
+            gameState.teams[teamId] = {
+                id: teamId,
+                name: teamName,
+                color: teamColor,
+                score: 0,
+                members: []
+            };
+            
+            // Join team
+            gameState.currentPlayer.teamId = teamId;
+            gameState.currentPlayer.isLeader = true;
+            gameState.teams[teamId].members.push(gameState.currentPlayer.id);
+            
+            document.getElementById('teamNameInput').value = '';
+            updateWaitingRoom();
+            saveGameState();
+        }
+
+        // Join team
+        function joinTeam(teamId) {
+            if (gameState.currentPlayer.teamId || gameState.teams[teamId].members.length >= 5) return;
+            
+            gameState.currentPlayer.teamId = teamId;
+            gameState.teams[teamId].members.push(gameState.currentPlayer.id);
+            
+            updateWaitingRoom();
+            saveGameState();
+        }
+
+        // Update waiting room
+        function updateWaitingRoom() {
+            // Update teams display
+            const teamsGrid = document.getElementById('teamsGrid');
+            const teamsList = Object.values(gameState.teams);
+            
+            teamsGrid.innerHTML = teamsList.map(team => {
+                const members = team.members.map(id => gameState.players[id]);
+                const canJoin = !gameState.currentPlayer.teamId && members.length < 5;
                 
-                let gameId;
-                if (snapshot.exists()) {
-                    gameId = Object.keys(snapshot.val())[0];
+                return `
+                    <div class="team-card" style="--team-color: ${team.color}">
+                        <div class="team-header">
+                            <div class="team-name" style="color: ${team.color}">${team.name}</div>
+                            <div class="team-slots">${members.length}/5</div>
+                        </div>
+                        <div class="team-members">
+                            ${members.map((member) => `
+                                <div class="member ${member.isLeader ? 'leader' : ''}">
+                                    ${member.isLeader ? '<span class="crown">👑</span>' : ''}
+                                    <span class="member-name">${member.name}</span>
+                                </div>
+                            `).join('')}
+                            ${[...Array(5 - members.length)].map(() => 
+                                '<div class="member" style="opacity: 0.3; border: 1px dashed rgba(255,255,255,0.2);">Empty Slot</div>'
+                            ).join('')}
+                        </div>
+                        ${canJoin ? `
+                            <button class="join-team-btn" onclick="joinTeam('${team.id}')">
+                                Join Team
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // Update players without teams
+            const noTeamPlayers = Object.values(gameState.players).filter(p => !p.teamId);
+            const noTeamList = document.getElementById('noTeamPlayersList');
+            
+            noTeamList.innerHTML = noTeamPlayers.map(player => `
+                <div class="player-item no-team">
+                    <span class="player-name">${player.name}</span>
+                </div>
+            `).join('') || '<div style="text-align: center; color: #6b7280;">All players have teams!</div>';
+            
+            // Update stats
+            document.getElementById('totalPlayers').textContent = Object.keys(gameState.players).length;
+            document.getElementById('totalTeams').textContent = teamsList.length;
+            
+            // Show start button if ready
+            const hasEnoughTeams = Object.keys(gameState.teams).length >= 2;
+            const hasEnoughPlayers = Object.keys(gameState.players).length >= 2;
+            const canStart = hasEnoughTeams && hasEnoughPlayers;
+            
+            document.getElementById('startSection').style.display = canStart ? 'block' : 'none';
+        }
+
+        // Start game
+        function startGame() {
+            // Auto-assign players without teams
+            const noTeamPlayers = Object.values(gameState.players).filter(p => !p.teamId);
+            const teamsList = Object.values(gameState.teams);
+            
+            noTeamPlayers.forEach(player => {
+                const smallestTeam = teamsList
+                    .filter(t => t.members.length < 5)
+                    .sort((a, b) => a.members.length - b.members.length)[0];
+                
+                if (smallestTeam) {
+                    player.teamId = smallestTeam.id;
+                    smallestTeam.members.push(player.id);
+                }
+            });
+            
+            showScreen('game');
+        }
+
+        // Initialize game board
+        function initializeGameBoard() {
+            const boardGrid = document.getElementById('boardGrid');
+            const categoryList = Object.keys(categories);
+            
+            boardGrid.innerHTML = categoryList.map(catName => {
+                const questions = categories[catName];
+                
+                return `
+                    <div class="category">
+                        <div class="category-title">${catName}</div>
+                        <div class="questions">
+                            ${questions.map(q => `
+                                <button class="question-btn" 
+                                        data-category="${catName}" 
+                                        data-points="${q.points}"
+                                        onclick="selectQuestion('${catName}', ${q.points})">
+                                    $${q.points}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updateCurrentTurn();
+            updateScoreboard();
+            startTurnTimer();
+        }
+
+        // Update current turn
+        function updateCurrentTurn() {
+            const teamList = Object.values(gameState.teams);
+            const currentTeam = teamList[gameState.currentTeamIndex];
+            
+            if (!currentTeam) return;
+            
+            document.getElementById('currentTeamDisplay').textContent = `${currentTeam.name}'s Turn`;
+            document.getElementById('currentTeamDisplay').style.color = currentTeam.color;
+            
+            const isMyTurn = gameState.currentPlayer.teamId === currentTeam.id;
+            document.getElementById('turnInstruction').textContent = 
+                isMyTurn ? 'Select a question from the board' : `Waiting for ${currentTeam.name} to select...`;
+            
+            // Update board state
+            updateBoard();
+        }
+
+        // Update board
+        function updateBoard() {
+            document.querySelectorAll('.question-btn').forEach(btn => {
+                const category = btn.dataset.category;
+                const points = btn.dataset.points;
+                const key = `${category}-${points}`;
+                
+                if (gameState.answeredQuestions[key]) {
+                    btn.classList.add('answered');
+                    btn.disabled = true;
+                }
+                
+                if (gameState.currentQuestion && 
+                    gameState.currentQuestion.category === category && 
+                    gameState.currentQuestion.points == points) {
+                    btn.classList.add('current');
                 } else {
-                    // Create new game
-                    const newGame = gamesRef.push();
-                    gameId = newGame.key;
-                    gameState.isHost = true;
-                    
-                    await newGame.set({
-                        status: 'waiting',
-                        host: gameState.userId,
-                        createdAt: Date.now()
-                    });
+                    btn.classList.remove('current');
                 }
                 
-                gameState.gameId = gameId;
+                // Enable/disable based on turn
+                const teamList = Object.values(gameState.teams);
+                const currentTeam = teamList[gameState.currentTeamIndex];
+                const isMyTurn = gameState.currentPlayer.teamId === currentTeam.id;
                 
-                // Add player
-                await db.ref('games/' + gameId + '/players/' + gameState.userId).set({
-                    name: name,
-                    discordId: discordId,
-                    joinedAt: Date.now()
-                });
-                
-                // Show game room
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('gameRoom').style.display = 'block';
-                document.getElementById('gameId').textContent = gameId.slice(-6).toUpperCase();
-                
-                if (gameState.isHost) {
-                    document.getElementById('startBtn').style.display = 'inline-block';
+                if (!btn.disabled && !gameState.currentQuestion) {
+                    btn.style.pointerEvents = isMyTurn ? 'auto' : 'none';
+                    btn.style.opacity = isMyTurn ? '1' : '0.7';
                 }
+            });
+        }
+
+        // Start turn timer
+        function startTurnTimer() {
+            gameState.turnTimeLeft = 35;
+            
+            if (gameState.turnTimer) clearInterval(gameState.turnTimer);
+            
+            gameState.turnTimer = setInterval(() => {
+                gameState.turnTimeLeft--;
+                updateTimerDisplay();
                 
-                // Listen for players
-                db.ref('games/' + gameId + '/players').on('value', updatePlayersList);
-                
-            } catch (error) {
-                console.error('Join error:', error);
-                alert('Failed to join game: ' + error.message);
+                if (gameState.turnTimeLeft <= 0) {
+                    clearInterval(gameState.turnTimer);
+                    nextTurn();
+                }
+            }, 1000);
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('turnTimer');
+            timerEl.textContent = gameState.turnTimeLeft;
+            
+            if (gameState.turnTimeLeft <= 10) {
+                timerEl.classList.add('warning');
+            } else {
+                timerEl.classList.remove('warning');
             }
         }
 
-        function updatePlayersList(snapshot) {
-            const players = snapshot.val() || {};
-            const listEl = document.getElementById('playersList');
+        // Select question
+        function selectQuestion(category, points) {
+            const teamList = Object.values(gameState.teams);
+            const currentTeam = teamList[gameState.currentTeamIndex];
             
-            listEl.innerHTML = Object.entries(players).map(([id, player]) => {
-                const isYou = id === gameState.userId;
-                return '<div class="player">' + player.name + (isYou ? ' (You)' : '') + '</div>';
+            if (!currentTeam || gameState.currentPlayer.teamId !== currentTeam.id || gameState.currentQuestion) return;
+            
+            const question = categories[category].find(q => q.points === points);
+            if (!question) return;
+            
+            gameState.currentQuestion = {
+                category: category,
+                points: points,
+                text: question.q,
+                answer: question.a,
+                teamId: currentTeam.id
+            };
+            
+            clearInterval(gameState.turnTimer);
+            showQuestionModal();
+            updateBoard();
+            saveGameState();
+        }
+
+        // Show question modal
+        function showQuestionModal() {
+            if (!gameState.currentQuestion) return;
+            
+            const modal = document.getElementById('questionModal');
+            const teamList = Object.values(gameState.teams);
+            const currentTeam = teamList[gameState.currentTeamIndex];
+            const isMyTeam = gameState.currentPlayer.teamId === currentTeam.id;
+            
+            document.getElementById('modalCategory').textContent = gameState.currentQuestion.category;
+            document.getElementById('modalPoints').textContent = `$${gameState.currentQuestion.points}`;
+            document.getElementById('modalQuestion').textContent = gameState.currentQuestion.text;
+            
+            // Setup answer section
+            const answerSection = document.getElementById('answerSection');
+            if (isMyTeam && gameState.currentPlayer.isLeader) {
+                answerSection.innerHTML = `
+                    <input type="text" class="answer-input" id="answerInput" 
+                           placeholder="Enter your answer..." autofocus>
+                    <button class="submit-answer-btn" id="submitAnswerBtn" onclick="submitAnswer()">
+                        SUBMIT ANSWER
+                    </button>
+                `;
+                setTimeout(() => document.getElementById('answerInput').focus(), 100);
+            } else {
+                answerSection.innerHTML = `
+                    <div class="waiting-message">
+                        <p>⏳ Waiting for ${currentTeam.name} to answer...</p>
+                    </div>
+                `;
+            }
+            
+            modal.classList.add('active');
+        }
+
+        // Submit answer
+        function submitAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            if (!answer || !gameState.currentQuestion) return;
+            
+            // Award points (auto-accept for demo)
+            const points = gameState.currentQuestion.points;
+            const teamId = gameState.currentQuestion.teamId;
+            
+            // Update team score
+            gameState.teams[teamId].score += points;
+            
+            // Update player score
+            gameState.currentPlayer.score += points;
+            
+            // Mark question as answered
+            const key = `${gameState.currentQuestion.category}-${gameState.currentQuestion.points}`;
+            gameState.answeredQuestions[key] = true;
+            
+            // Clear current question
+            gameState.currentQuestion = null;
+            document.getElementById('questionModal').classList.remove('active');
+            
+            // Check if game should end
+            const totalAnswered = Object.keys(gameState.answeredQuestions).length;
+            const totalQuestions = Object.keys(categories).reduce((sum, cat) => 
+                sum + categories[cat].length, 0
+            );
+            
+            if (totalAnswered >= totalQuestions * 0.6) { // End at 60% completion for demo
+                showScreen('results');
+            } else {
+                setTimeout(() => nextTurn(), 1000);
+            }
+            
+            updateBoard();
+            updateScoreboard();
+            saveGameState();
+        }
+
+        // Next turn
+        function nextTurn() {
+            const teamList = Object.values(gameState.teams);
+            gameState.currentTeamIndex = (gameState.currentTeamIndex + 1) % teamList.length;
+            
+            updateCurrentTurn();
+            startTurnTimer();
+            saveGameState();
+        }
+
+        // Update scoreboard
+        function updateScoreboard() {
+            const teamScores = document.getElementById('teamScores');
+            const teamList = Object.values(gameState.teams).sort((a, b) => b.score - a.score);
+            
+            teamScores.innerHTML = teamList.map((team) => {
+                const isCurrent = Object.values(gameState.teams)[gameState.currentTeamIndex]?.id === team.id;
+                
+                return `
+                    <div class="team-score-item ${isCurrent ? 'current' : ''}">
+                        <span class="team-score-name" style="color: ${team.color}">${team.name}</span>
+                        <span class="team-score-value">${team.score || 0}</span>
+                    </div>
+                `;
             }).join('');
         }
 
-        async function startGame() {
-            if (!gameState.isHost || !gameState.gameId) return;
+        // Show results
+        function showResults() {
+            const sortedTeams = Object.values(gameState.teams).sort((a, b) => (b.score || 0) - (a.score || 0));
+            const winningTeam = sortedTeams[0];
             
-            try {
-                await db.ref('games/' + gameState.gameId + '/status').set('playing');
-                alert('Game started! (Game implementation coming soon)');
-            } catch (error) {
-                console.error('Start error:', error);
-                alert('Failed to start game: ' + error.message);
-            }
+            if (!winningTeam) return;
+            
+            // Display winner
+            document.getElementById('winnerTeamName').textContent = winningTeam.name;
+            document.getElementById('winnerTeamName').style.color = winningTeam.color;
+            document.getElementById('winnerScore').textContent = `${winningTeam.score || 0} POINTS`;
+            
+            // Display winning team members
+            const winningMembers = winningTeam.members.map(id => gameState.players[id]);
+            const mvp = winningMembers.reduce((best, player) => 
+                (player.score || 0) > (best.score || 0) ? player : best
+            , winningMembers[0]);
+            
+            document.getElementById('winnerMembers').innerHTML = winningMembers.map(member => `
+                <div class="winner-member ${member.id === mvp?.id ? 'mvp' : ''}">
+                    ${member.name} ${member.id === mvp?.id ? '👑' : ''}
+                </div>
+            `).join('');
+            
+            createConfetti();
         }
+
+        // Create confetti
+        function createConfetti() {
+            const confettiContainer = document.getElementById('confetti');
+            const colors = ['#fbbf24', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#10b981'];
+            
+            for (let i = 0; i < 100; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDelay = Math.random() * 3 + 's';
+                piece.style.animationDuration = (3 + Math.random() * 2) + 's';
+                confettiContainer.appendChild(piece);
+            }
+            
+            // Remove confetti after 10 seconds
+            setTimeout(() => {
+                confettiContainer.innerHTML = '';
+            }, 10000);
+        }
+
+        // Reset game
+        function resetGame() {
+            localStorage.removeItem('fanumTriviaState');
+            location.reload();
+        }
+
+        // Make functions globally available
+        window.joinTeam = joinTeam;
+        window.selectQuestion = selectQuestion;
+        window.submitAnswer = submitAnswer;
     </script>
 </body>
 </html>
