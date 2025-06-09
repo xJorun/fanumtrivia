@@ -90,7 +90,30 @@ export const prerender = false;
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
+    <!-- Add a fallback check -->
     <script>
+        // Quick Firebase check
+        setTimeout(() => {
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase failed to load from primary CDN');
+                // You could add fallback CDN here if needed
+            }
+        }, 3000);
+    </script>
+
+    <script>
+        // Add URL parameter check for test mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const testMode = urlParams.get('test') === 'true';
+        
+        if (testMode) {
+            console.log('Running in test mode - skipping Firebase');
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('appContainer').classList.add('loaded');
+            initializeMainApp();
+            return;
+        }
+        
         // Constants
         const ADMIN_DISCORD_ID = '1049833923947016302';
         const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1380037745942069410/Ol0oCrT0kEHE6TTjCuHYG5okCLFAc0jPVjIN7QeDz1WEuRm9qI6fcP3lD85QxSjao3U6';
@@ -113,12 +136,32 @@ export const prerender = false;
 
         async function initializeFirebase() {
             try {
+                console.log('Starting Firebase initialization...');
+                document.querySelector('.loading-text').textContent = 'Loading Firebase SDK...';
+                
+                // Check if Firebase is loaded
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK not loaded');
+                }
+                
+                console.log('Firebase SDK loaded, initializing app...');
+                document.querySelector('.loading-text').textContent = 'Connecting to Firebase...';
+                
                 app = firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
                 auth = firebase.auth();
                 
-                // Sign in anonymously
-                const userCredential = await auth.signInAnonymously();
+                console.log('Firebase initialized, signing in...');
+                document.querySelector('.loading-text').textContent = 'Authenticating...';
+                
+                // Sign in anonymously with timeout
+                const authTimeout = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Authentication timeout')), 10000)
+                );
+                
+                const authPromise = auth.signInAnonymously();
+                const userCredential = await Promise.race([authPromise, authTimeout]);
+                
                 console.log('Authenticated:', userCredential.user.uid);
                 
                 isFirebaseReady = true;
@@ -128,20 +171,56 @@ export const prerender = false;
                 document.getElementById('appContainer').classList.add('loaded');
                 
                 // Initialize the app
-                initializeApp();
+                initializeMainApp();
                 
             } catch (error) {
                 console.error('Firebase initialization error:', error);
                 document.querySelector('.loading-text').innerHTML = 
-                    'Failed to connect to Firebase<br><small>Please refresh the page</small>';
+                    `<div style="color: #ef4444;">
+                        Failed to initialize Firebase<br>
+                        <small>${error.message}</small><br>
+                        <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #8b5cf6; border: none; border-radius: 0.5rem; color: white; cursor: pointer;">
+                            Retry
+                        </button>
+                    </div>`;
             }
         }
 
         // Initialize Firebase when page loads
-        initializeFirebase();
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, checking Firebase...');
+            
+            // Check if Firebase scripts are loaded
+            let checkCount = 0;
+            const maxChecks = 20; // 10 seconds max
+            
+            const checkFirebase = setInterval(() => {
+                checkCount++;
+                console.log(`Firebase check ${checkCount}...`);
+                
+                if (typeof firebase !== 'undefined') {
+                    console.log('Firebase found, initializing...');
+                    clearInterval(checkFirebase);
+                    initializeFirebase();
+                } else if (checkCount >= maxChecks) {
+                    console.error('Firebase SDK failed to load');
+                    clearInterval(checkFirebase);
+                    document.querySelector('.loading-text').innerHTML = 
+                        `<div style="color: #ef4444;">
+                            Firebase SDK failed to load<br>
+                            <small>Check your internet connection</small><br>
+                            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #8b5cf6; border: none; border-radius: 0.5rem; color: white; cursor: pointer;">
+                                Retry
+                            </button>
+                        </div>`;
+                }
+            }, 500);
+        });
 
         // Main app initialization
-        function initializeApp() {
+        function initializeMainApp() {
+            console.log('Initializing main app...');
+            
             // Add the main app HTML
             document.getElementById('app').innerHTML = `
                 <style>
