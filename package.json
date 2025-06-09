@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "astro": "^4.2.1",
-    "@astrojs/vercel": "^3.0.0"
+    "@astrojs/vercel": "^4.0.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
   }
 }
+
 
