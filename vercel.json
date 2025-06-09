@@ -3,15 +3,10 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": null,
-  "functions": {
-    "src/pages/index.astro": {
-      "includeFiles": "src/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/index"
+      "destination": "/$1"
     }
   ],
   "headers": [
