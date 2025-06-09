@@ -88,13 +88,13 @@
 
         /* Screens */
         .screen {
-            display: none;
+            display: none !important;
             min-height: 100vh;
             padding: 2rem;
         }
 
         .screen.active {
-            display: flex;
+            display: flex !important;
             animation: fadeIn 0.5s ease-out;
         }
 
@@ -1507,6 +1507,9 @@
             <!-- Scoreboard -->
             <div class="scoreboard" id="scoreboard">
                 <h3 class="scoreboard-title">🏆 SCOREBOARD 🏆</h3>
+                <div id="singlePlayerBadge" style="display: none; text-align: center; margin-bottom: 1rem; padding: 0.5rem; background: rgba(251, 191, 36, 0.2); border-radius: 0.5rem; color: #fbbf24; font-size: 0.875rem;">
+                    🧪 Solo Practice Mode
+                </div>
                 
                 <div class="team-scores" id="teamScores">
                     <!-- Team scores listed here -->
@@ -1515,7 +1518,7 @@
         </div>
 
         <!-- Question Modal -->
-        <div class="modal" id="questionModal">
+        <div class="modal" id="questionModal" onclick="if(event.target === this) this.classList.remove('active')">
             <div class="modal-content">
                 <div class="question-header">
                     <span class="question-category" id="modalCategory">Category</span>
@@ -1611,9 +1614,23 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Hide all screens except menu initially
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById('mainMenu').classList.add('active');
+            
             createParticles();
             setupEventListeners();
-            loadGameState();
+            
+            // Only load saved state if it exists and we're past the menu
+            const saved = localStorage.getItem('fanumTriviaState');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.currentScreen !== 'menu' && data.currentPlayer) {
+                    loadGameState();
+                }
+            }
         });
 
         // Create particles
@@ -1654,8 +1671,13 @@
                 const data = JSON.parse(saved);
                 Object.assign(gameState, data);
                 
-                if (gameState.currentScreen !== 'menu') {
+                // Ensure player exists before showing non-menu screens
+                if (gameState.currentScreen !== 'menu' && gameState.currentPlayer) {
                     showScreen(gameState.currentScreen);
+                } else {
+                    // Reset to menu if no valid player
+                    gameState.currentScreen = 'menu';
+                    showScreen('menu');
                 }
             }
         }
@@ -1883,8 +1905,14 @@
             document.getElementById('currentTeamDisplay').style.color = currentTeam.color;
             
             const isMyTurn = gameState.currentPlayer.teamId === currentTeam.id;
-            document.getElementById('turnInstruction').textContent = 
-                isMyTurn ? 'Select a question from the board' : `Waiting for ${currentTeam.name} to select...`;
+            
+            // Handle single player mode
+            if (teamList.length === 1) {
+                document.getElementById('turnInstruction').textContent = 'Select any question to continue';
+            } else {
+                document.getElementById('turnInstruction').textContent = 
+                    isMyTurn ? 'Select a question from the board' : `Waiting for ${currentTeam.name} to select...`;
+            }
             
             // Update board state
             updateBoard();
@@ -2053,7 +2081,10 @@
         // Next turn
         function nextTurn() {
             const teamList = Object.values(gameState.teams);
-            gameState.currentTeamIndex = (gameState.currentTeamIndex + 1) % teamList.length;
+            if (teamList.length > 1) {
+                gameState.currentTeamIndex = (gameState.currentTeamIndex + 1) % teamList.length;
+            }
+            // For single team, stay on the same team
             
             updateCurrentTurn();
             startTurnTimer();
