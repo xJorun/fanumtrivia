@@ -1,124 +1,131 @@
 ---
-// src/pages/index.astro
 export const prerender = false;
 ---
 
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fanum Discord Trivia Championship</title>
-    
+    <title>Fanum Trivia Championship</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;900&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background: #000;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
             color: white;
+            margin: 0;
+            padding: 20px;
             min-height: 100vh;
-            overflow-x: hidden;
         }
-
-        .loading-screen {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .loading-content {
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
             text-align: center;
         }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 3px solid rgba(139, 92, 246, 0.3);
-            border-top-color: #8b5cf6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
+        
+        h1 {
             color: #8b5cf6;
-            font-size: 1.25rem;
-            font-weight: 600;
         }
-
-        /* Hide everything until loaded */
-        .app-container {
-            display: none;
+        
+        .status {
+            padding: 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid #8b5cf6;
+            border-radius: 8px;
+            margin: 20px 0;
         }
-
-        .app-container.loaded {
-            display: block;
+        
+        input {
+            padding: 10px;
+            margin: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #8b5cf6;
+            color: white;
+            border-radius: 4px;
+            width: 200px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background: #8b5cf6;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #7c3aed;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .players {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+        
+        .player {
+            padding: 8px;
+            margin: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Initializing Firebase...</div>
+    <div class="container">
+        <h1>Fanum Discord Trivia Championship</h1>
+        
+        <div class="status">
+            <p id="statusText">Initializing...</p>
+        </div>
+        
+        <div id="loginForm">
+            <h2>Join Game</h2>
+            <div>
+                <input type="text" id="playerName" placeholder="Your Name" />
+            </div>
+            <div>
+                <input type="text" id="discordId" placeholder="Discord ID" />
+            </div>
+            <button id="joinBtn" onclick="joinGame()" disabled>Join Game</button>
+        </div>
+        
+        <div id="gameRoom" style="display: none;">
+            <h2>Game Room</h2>
+            <p>Game ID: <span id="gameId">-</span></p>
+            <div class="players">
+                <h3>Players:</h3>
+                <div id="playersList"></div>
+            </div>
+            <button id="startBtn" onclick="startGame()" style="display: none;">Start Game</button>
         </div>
     </div>
 
-    <!-- Main App Container -->
-    <div class="app-container" id="appContainer">
-        <div id="app"></div>
-    </div>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-
-    <!-- Add a fallback check -->
-    <script>
-        // Quick Firebase check
-        setTimeout(() => {
-            if (typeof firebase === 'undefined') {
-                console.error('Firebase failed to load from primary CDN');
-                // You could add fallback CDN here if needed
-            }
-        }, 3000);
-    </script>
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Add URL parameter check for test mode
-        const urlParams = new URLSearchParams(window.location.search);
-        const testMode = urlParams.get('test') === 'true';
-        
-        if (testMode) {
-            console.log('Running in test mode - skipping Firebase');
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('appContainer').classList.add('loaded');
-            initializeMainApp();
-            return;
-        }
-        
-        // Constants
-        const ADMIN_DISCORD_ID = '1049833923947016302';
-        const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1380037745942069410/Ol0oCrT0kEHE6TTjCuHYG5okCLFAc0jPVjIN7QeDz1WEuRm9qI6fcP3lD85QxSjao3U6';
-        
-        // Firebase Configuration
+        // Globals
+        let app, db, auth;
+        let gameState = {
+            gameId: null,
+            userId: null,
+            isHost: false,
+            players: {}
+        };
+
+        // Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyAJD2YAQQ-J2FSPYAveUMiGZwFKCxpA2ZM",
             authDomain: "trivia-7991b.firebaseapp.com",
@@ -126,466 +133,124 @@ export const prerender = false;
             projectId: "trivia-7991b",
             storageBucket: "trivia-7991b.firebasestorage.app",
             messagingSenderId: "195180427387",
-            appId: "1:195180427387:web:791059ee47d7705c41cade",
-            measurementId: "G-684D195P99"
+            appId: "1:195180427387:web:791059ee47d7705c41cade"
         };
 
-        // Initialize Firebase
-        let app, db, auth;
-        let isFirebaseReady = false;
+        // Initialize
+        window.addEventListener('DOMContentLoaded', initializeApp);
 
-        async function initializeFirebase() {
+        async function initializeApp() {
+            const statusEl = document.getElementById('statusText');
+            
             try {
-                console.log('Starting Firebase initialization...');
-                document.querySelector('.loading-text').textContent = 'Loading Firebase SDK...';
-                
-                // Check if Firebase is loaded
-                if (typeof firebase === 'undefined') {
-                    throw new Error('Firebase SDK not loaded');
-                }
-                
-                console.log('Firebase SDK loaded, initializing app...');
-                document.querySelector('.loading-text').textContent = 'Connecting to Firebase...';
-                
+                // Initialize Firebase
+                statusEl.textContent = 'Connecting to Firebase...';
                 app = firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
                 auth = firebase.auth();
                 
-                console.log('Firebase initialized, signing in...');
-                document.querySelector('.loading-text').textContent = 'Authenticating...';
+                // Sign in anonymously
+                statusEl.textContent = 'Authenticating...';
+                const userCredential = await auth.signInAnonymously();
+                gameState.userId = userCredential.user.uid;
                 
-                // Sign in anonymously with timeout
-                const authTimeout = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Authentication timeout')), 10000)
-                );
+                statusEl.textContent = 'Ready! Enter your details to join.';
                 
-                const authPromise = auth.signInAnonymously();
-                const userCredential = await Promise.race([authPromise, authTimeout]);
+                // Enable form
+                document.getElementById('joinBtn').disabled = false;
                 
-                console.log('Authenticated:', userCredential.user.uid);
-                
-                isFirebaseReady = true;
-                
-                // Hide loading screen and show app
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('appContainer').classList.add('loaded');
-                
-                // Initialize the app
-                initializeMainApp();
+                // Setup input validation
+                document.getElementById('playerName').addEventListener('input', validateForm);
+                document.getElementById('discordId').addEventListener('input', validateForm);
                 
             } catch (error) {
-                console.error('Firebase initialization error:', error);
-                document.querySelector('.loading-text').innerHTML = 
-                    `<div style="color: #ef4444;">
-                        Failed to initialize Firebase<br>
-                        <small>${error.message}</small><br>
-                        <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #8b5cf6; border: none; border-radius: 0.5rem; color: white; cursor: pointer;">
-                            Retry
-                        </button>
-                    </div>`;
+                console.error('Initialization error:', error);
+                statusEl.textContent = 'Error: ' + error.message;
+                statusEl.style.color = '#ff4444';
             }
         }
 
-        // Initialize Firebase when page loads
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, checking Firebase...');
-            
-            // Check if Firebase scripts are loaded
-            let checkCount = 0;
-            const maxChecks = 20; // 10 seconds max
-            
-            const checkFirebase = setInterval(() => {
-                checkCount++;
-                console.log(`Firebase check ${checkCount}...`);
-                
-                if (typeof firebase !== 'undefined') {
-                    console.log('Firebase found, initializing...');
-                    clearInterval(checkFirebase);
-                    initializeFirebase();
-                } else if (checkCount >= maxChecks) {
-                    console.error('Firebase SDK failed to load');
-                    clearInterval(checkFirebase);
-                    document.querySelector('.loading-text').innerHTML = 
-                        `<div style="color: #ef4444;">
-                            Firebase SDK failed to load<br>
-                            <small>Check your internet connection</small><br>
-                            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #8b5cf6; border: none; border-radius: 0.5rem; color: white; cursor: pointer;">
-                                Retry
-                            </button>
-                        </div>`;
-                }
-            }, 500);
-        });
-
-        // Main app initialization
-        function initializeMainApp() {
-            console.log('Initializing main app...');
-            
-            // Add the main app HTML
-            document.getElementById('app').innerHTML = `
-                <style>
-                    .animated-bg {
-                        position: fixed;
-                        inset: 0;
-                        z-index: -1;
-                        background: linear-gradient(45deg, #1a0033, #000, #1a0033);
-                        overflow: hidden;
-                    }
-
-                    .main-container {
-                        position: relative;
-                        z-index: 10;
-                        min-height: 100vh;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        padding: 2rem;
-                    }
-
-                    .menu-card {
-                        background: rgba(255, 255, 255, 0.03);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(139, 92, 246, 0.3);
-                        border-radius: 2rem;
-                        padding: 3rem;
-                        max-width: 500px;
-                        width: 100%;
-                        text-align: center;
-                    }
-
-                    .game-title {
-                        font-family: 'Bebas Neue', cursive;
-                        font-size: 3rem;
-                        color: #8b5cf6;
-                        margin-bottom: 2rem;
-                    }
-
-                    .input-group {
-                        margin-bottom: 1.5rem;
-                        text-align: left;
-                    }
-
-                    .input-label {
-                        display: block;
-                        margin-bottom: 0.5rem;
-                        color: #a78bfa;
-                        font-weight: 600;
-                        font-size: 0.875rem;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                    }
-
-                    .input {
-                        width: 100%;
-                        padding: 1rem;
-                        background: rgba(255, 255, 255, 0.05);
-                        border: 2px solid rgba(139, 92, 246, 0.3);
-                        border-radius: 0.75rem;
-                        color: white;
-                        font-size: 1rem;
-                        outline: none;
-                    }
-
-                    .input:focus {
-                        border-color: #8b5cf6;
-                        background: rgba(139, 92, 246, 0.1);
-                    }
-
-                    .join-btn {
-                        width: 100%;
-                        padding: 1.25rem;
-                        background: linear-gradient(135deg, #8b5cf6, #ec4899);
-                        border: none;
-                        border-radius: 0.75rem;
-                        color: white;
-                        font-size: 1.125rem;
-                        font-weight: bold;
-                        cursor: pointer;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                    }
-
-                    .join-btn:hover:not(:disabled) {
-                        transform: translateY(-2px);
-                        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
-                    }
-
-                    .join-btn:disabled {
-                        opacity: 0.5;
-                        cursor: not-allowed;
-                    }
-
-                    .status-message {
-                        margin-top: 1rem;
-                        padding: 1rem;
-                        border-radius: 0.5rem;
-                        font-size: 0.875rem;
-                    }
-
-                    .status-message.success {
-                        background: rgba(34, 197, 94, 0.2);
-                        border: 1px solid #22c55e;
-                        color: #86efac;
-                    }
-
-                    .status-message.error {
-                        background: rgba(239, 68, 68, 0.2);
-                        border: 1px solid #ef4444;
-                        color: #fca5a5;
-                    }
-
-                    .game-info {
-                        margin-top: 2rem;
-                        padding: 1.5rem;
-                        background: rgba(59, 130, 246, 0.1);
-                        border: 1px solid rgba(59, 130, 246, 0.3);
-                        border-radius: 1rem;
-                    }
-
-                    .game-info h3 {
-                        color: #93c5fd;
-                        margin-bottom: 1rem;
-                    }
-
-                    .player-list {
-                        max-height: 200px;
-                        overflow-y: auto;
-                    }
-
-                    .player-item {
-                        padding: 0.5rem;
-                        background: rgba(255, 255, 255, 0.05);
-                        border-radius: 0.5rem;
-                        margin-bottom: 0.5rem;
-                    }
-                </style>
-
-                <div class="animated-bg"></div>
-                
-                <div class="main-container">
-                    <div class="menu-card">
-                        <h1 class="game-title">FANUM TRIVIA</h1>
-                        
-                        <div id="menuContent">
-                            <div class="input-group">
-                                <label class="input-label">Player Name</label>
-                                <input type="text" class="input" id="playerName" placeholder="Enter your name" maxlength="20">
-                            </div>
-                            
-                            <div class="input-group">
-                                <label class="input-label">Discord ID</label>
-                                <input type="text" class="input" id="discordId" placeholder="YourName#1234">
-                            </div>
-                            
-                            <button class="join-btn" id="joinBtn" disabled>
-                                JOIN GAME
-                            </button>
-                            
-                            <div id="statusMessage"></div>
-                        </div>
-                        
-                        <div id="gameContent" style="display: none;">
-                            <div class="game-info">
-                                <h3>Game Lobby</h3>
-                                <p>Game ID: <strong id="gameIdDisplay">-</strong></p>
-                                <p>Players: <strong id="playerCount">0</strong></p>
-                                
-                                <div class="player-list" id="playerList">
-                                    <!-- Players will be listed here -->
-                                </div>
-                                
-                                <button class="join-btn" id="startBtn" style="display: none;">
-                                    START GAME
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Setup event listeners
-            setupEventListeners();
-        }
-
-        // Global game state
-        let gameState = {
-            gameId: null,
-            currentUserId: null,
-            currentPlayer: null,
-            isHost: false,
-            players: {}
-        };
-
-        function setupEventListeners() {
-            // Input validation
-            const playerNameInput = document.getElementById('playerName');
-            const discordIdInput = document.getElementById('discordId');
-            const joinBtn = document.getElementById('joinBtn');
-            
-            playerNameInput.addEventListener('input', validateInputs);
-            discordIdInput.addEventListener('input', validateInputs);
-            joinBtn.addEventListener('click', joinGame);
-            
-            document.getElementById('startBtn').addEventListener('click', startGame);
-        }
-
-        function validateInputs() {
+        function validateForm() {
             const name = document.getElementById('playerName').value.trim();
             const discord = document.getElementById('discordId').value.trim();
-            document.getElementById('joinBtn').disabled = !name || !discord || !isFirebaseReady;
+            document.getElementById('joinBtn').disabled = !name || !discord;
         }
 
         async function joinGame() {
             const name = document.getElementById('playerName').value.trim();
             const discordId = document.getElementById('discordId').value.trim();
             
-            if (!name || !discordId || !isFirebaseReady) return;
-            
-            showStatus('Joining game...', 'success');
+            if (!name || !discordId) return;
             
             try {
-                // Get current user
-                gameState.currentUserId = auth.currentUser.uid;
-                
                 // Find or create game
                 const gamesRef = db.ref('games');
                 const snapshot = await gamesRef.orderByChild('status').equalTo('waiting').limitToFirst(1).once('value');
                 
                 let gameId;
-                let isNewGame = false;
-                
                 if (snapshot.exists()) {
                     gameId = Object.keys(snapshot.val())[0];
                 } else {
+                    // Create new game
                     const newGame = gamesRef.push();
                     gameId = newGame.key;
-                    isNewGame = true;
+                    gameState.isHost = true;
                     
                     await newGame.set({
                         status: 'waiting',
-                        createdAt: firebase.database.ServerValue.TIMESTAMP,
-                        host: gameState.currentUserId
+                        host: gameState.userId,
+                        createdAt: Date.now()
                     });
                 }
                 
                 gameState.gameId = gameId;
-                gameState.isHost = isNewGame || discordId === ADMIN_DISCORD_ID;
                 
-                // Create player
-                gameState.currentPlayer = {
-                    id: gameState.currentUserId,
+                // Add player
+                await db.ref('games/' + gameId + '/players/' + gameState.userId).set({
                     name: name,
                     discordId: discordId,
-                    joinedAt: firebase.database.ServerValue.TIMESTAMP
-                };
+                    joinedAt: Date.now()
+                });
                 
-                // Add player to game
-                await db.ref(`games/${gameId}/players/${gameState.currentUserId}`).set(gameState.currentPlayer);
+                // Show game room
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('gameRoom').style.display = 'block';
+                document.getElementById('gameId').textContent = gameId.slice(-6).toUpperCase();
                 
-                // Show game lobby
-                showGameLobby();
+                if (gameState.isHost) {
+                    document.getElementById('startBtn').style.display = 'inline-block';
+                }
                 
-                // Setup realtime listeners
-                setupGameListeners();
-                
-                // Send Discord notification
-                sendDiscordNotification(`🎮 **${name}** joined the game!`);
+                // Listen for players
+                db.ref('games/' + gameId + '/players').on('value', updatePlayersList);
                 
             } catch (error) {
-                console.error('Error joining game:', error);
-                showStatus('Failed to join game. Please try again.', 'error');
+                console.error('Join error:', error);
+                alert('Failed to join game: ' + error.message);
             }
         }
 
-        function showGameLobby() {
-            document.getElementById('menuContent').style.display = 'none';
-            document.getElementById('gameContent').style.display = 'block';
-            document.getElementById('gameIdDisplay').textContent = gameState.gameId.slice(-6).toUpperCase();
+        function updatePlayersList(snapshot) {
+            const players = snapshot.val() || {};
+            const listEl = document.getElementById('playersList');
             
-            if (gameState.isHost) {
-                document.getElementById('startBtn').style.display = 'block';
-            }
-        }
-
-        function setupGameListeners() {
-            if (!gameState.gameId) return;
-            
-            // Listen for players
-            db.ref(`games/${gameState.gameId}/players`).on('value', (snapshot) => {
-                const players = snapshot.val() || {};
-                gameState.players = players;
-                updatePlayerList(players);
-            });
-            
-            // Listen for game status
-            db.ref(`games/${gameState.gameId}/status`).on('value', (snapshot) => {
-                const status = snapshot.val();
-                if (status === 'playing') {
-                    showStatus('Game is starting!', 'success');
-                    // Here you would transition to the game screen
-                }
-            });
-        }
-
-        function updatePlayerList(players) {
-            const playerList = document.getElementById('playerList');
-            const playerCount = document.getElementById('playerCount');
-            
-            const playerArray = Object.values(players);
-            playerCount.textContent = playerArray.length;
-            
-            playerList.innerHTML = playerArray.map(player => `
-                <div class="player-item">
-                    ${player.name} ${player.id === gameState.currentUserId ? '(You)' : ''}
-                </div>
-            `).join('');
+            listEl.innerHTML = Object.entries(players).map(([id, player]) => {
+                const isYou = id === gameState.userId;
+                return '<div class="player">' + player.name + (isYou ? ' (You)' : '') + '</div>';
+            }).join('');
         }
 
         async function startGame() {
-            if (!gameState.isHost) return;
+            if (!gameState.isHost || !gameState.gameId) return;
             
             try {
-                await db.ref(`games/${gameState.gameId}/status`).set('playing');
-                sendDiscordNotification('🚀 **Game Started!**');
+                await db.ref('games/' + gameState.gameId + '/status').set('playing');
+                alert('Game started! (Game implementation coming soon)');
             } catch (error) {
-                console.error('Error starting game:', error);
-                showStatus('Failed to start game', 'error');
+                console.error('Start error:', error);
+                alert('Failed to start game: ' + error.message);
             }
         }
-
-        function showStatus(message, type = 'success') {
-            const statusEl = document.getElementById('statusMessage');
-            statusEl.innerHTML = `<div class="status-message ${type}">${message}</div>`;
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusEl.innerHTML = '';
-                }, 3000);
-            }
-        }
-
-        async function sendDiscordNotification(message) {
-            try {
-                await fetch(DISCORD_WEBHOOK, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: message,
-                        username: 'Fanum Trivia Bot',
-                        avatar_url: 'https://res.cloudinary.com/dcyvxzhnl/image/upload/v1749096874/image_2025-06-05_001433624_qn0xue.png'
-                    })
-                });
-            } catch (error) {
-                console.error('Discord webhook error:', error);
-            }
-        }
-
-        // Handle disconnect
-        window.addEventListener('beforeunload', () => {
-            if (gameState.gameId && gameState.currentUserId) {
-                db.ref(`games/${gameState.gameId}/players/${gameState.currentUserId}`).remove();
-            }
-        });
     </script>
 </body>
 </html>
